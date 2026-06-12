@@ -1,13 +1,9 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import {connectDB }from './config/db.js';
-
-// Route Imports - Matching your exact filenames in the sidebar
-import authRoutes from "./routes/authRoute.js"
+import authRoutes from "./routes/authRoute.js";
 import attendanceRoutes from './routes/attendenceRoute.js';
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
