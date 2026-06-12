@@ -6,7 +6,7 @@ import LoginPage from './pages/loginPage';
 import RegisterPage from './pages/registerPage';
 
 // Regular Authenticated User / Student Pages
-import UserDashboard from './pages/user/userDashboard';
+import UserDashboard from './pages/user/userDashBoard';
 import UserHistory from './pages/user/userHistory';
 import UserProfile from './pages/user/userProfile';
 
