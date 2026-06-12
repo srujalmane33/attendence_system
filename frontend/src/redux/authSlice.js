@@ -47,12 +47,21 @@ const getSafeStorageItem = (key) => {
   }
 };
 
+// Safe helper to extract token string cleanly from storage without string escapes
+const getSafeToken = () => {
+  const token = localStorage.getItem('token');
+  if (!token || token === 'undefined' || token === 'null') {
+    return null;
+  }
+  return token;
+};
+
 const authSlice = createSlice({
   name: 'auth',
   initialState: { 
-    // user: getSafeStorageItem('user'), 
-    // token: localStorage.getItem('token') || null, 
-    token:null,
+    // Safely reads browser storage items immediately when application updates or reloads
+    user: getSafeStorageItem('user'), 
+    token: getSafeToken(), 
     loading: false, 
     error: null 
   },
@@ -61,8 +70,11 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.loading = false;
-      // localStorage.removeItem('token');
-      // localStorage.removeItem('user');
+      state.error = null;
+      
+      // Clean persistent disk nodes to guarantee users don't loop back during state mount refreshes
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
     },
     clearError: (state) => {
       state.error = null;
