@@ -1,0 +1,37 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String   @unique
+  password  String
+  role      String   // "student" or "admin"
+  studentId String?  @unique // Nullable for admin users
+  createdAt DateTime @default(now())
+
+  @@map("users") // Maps Prisma directly to your old Mongoose 'users' collection
+}
+
+model Attendance {
+  id        String          @id @default(auto()) @map("_id") @db.ObjectId
+  student   EmbeddedStudent
+  date      String          // Stored as "YYYY-MM-DD"
+  entryTime DateTime        @default(now())
+  exitTime  DateTime?       // Nullable until exit is clicked
+  status    String          @default("In-Classroom") // "In-Classroom" or "Left"
+
+  @@map("attendances") // Maps Prisma directly to your old Mongoose 'attendances' collection
+}
+
+type EmbeddedStudent {
+  id        String @map("_id") @db.ObjectId
+  name      String
+  studentId String
+}
