@@ -1,53 +1,70 @@
 import jwt from 'jsonwebtoken';
 import prisma from '../config/db.js';
 
-// Middleware to lock down routes and verify the student/admin session token
+/**
+ * Protect Middleware
+ * Locks down secure endpoints by verifying the incoming Bearer JWT.
+ * Automatically attaches the authenticated user profile to the request object.
+ */
 export const protect = async (req, res, next) => {
   let token;
 
   // Check if the request contains a Bearer token in the Authorization header
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
     try {
-      // Extract the token (Format: "Bearer <token_string>")
+      // Extract the raw token string (Format: "Bearer <token>")
       token = req.headers.authorization.split(' ')[1];
 
-      // Decode and verify the token using your JWT_SECRET from the .env file
+      // Decode and verify the token using the secret key from the environment variables
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Fetch the user data linked to the token from Atlas via Prisma Client
+      // Fetch the corresponding user document from MongoDB Atlas via Prisma Client
       const user = await prisma.user.findUnique({
         where: { id: decoded.id }
       });
 
       if (!user) {
-        return res.status(401).json({ message: 'Not authorized, user no longer exists' });
+        return res.status(401).json({ message: 'Authorization rejected: User no longer exists.' });
       }
 
-      // Safely strip out the sensitive password hash before passing user context forward
+      // Safely delete the hashed password from the user object before sending it down the pipeline
       delete user.password;
 
-      // Attach user profile metadata to the global request pipeline
+      // Attach user profile metadata dynamically to the request context
       req.user = user;
       
       return next();
     } catch (error) {
-      return res.status(401).json({ message: 'Not authorized, session token validation failed' });
+      console.error('Session Token Validation Failure:', error.message);
+      return res.status(401).json({ message: 'Session validation failed. Please log in again.' });
     }
   }
 
   if (!token) {
-    return res.status(401).json({ message: 'Not authorized, no token provided' });
+    return res.status(401).json({ message: 'Access denied: No authentication token found.' });
   }
 };
 
-// Middleware to restrict access to specific roles (e.g., stopping students from viewing admin logs)
+/**
+ * Authorize Middleware
+ * Restricts access to specific security clearance levels (e.g., stopping students from accessing admin panels).
+ * Must be chained AFTER the 'protect' middleware.
+ */
 export const authorize = (...roles) => {
   return (req, res, next) => {
+    if (!req.user) {
+      return res.status(501).json({ message: 'Authorization error: User context was not loaded.' });
+    }
+
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
-        message: `Role (${req.user.role}) is not authorized to access this resource`,
+        message: `Forbidden: Accounts with the role of "${req.user.role}" do not have permission to view this resource.`
       });
     }
-    next();
+    
+    return next();
   };
 };

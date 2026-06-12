@@ -6,6 +6,7 @@ import { useNavigate, Link } from 'react-router-dom';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('student');
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error } = useSelector((state) => state.auth);
@@ -13,7 +14,7 @@ export default function LoginPage() {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    dispatch(loginUser({ email, password, role: 'student' })).then((res) => {
+    dispatch(loginUser({ email, password, role })).then((res) => {
       if (res.meta.requestStatus === 'fulfilled') {
         // 1. SAFELY LOOK FOR THE ROLE AT ALL LEVELS
         // Checks if your backend returns data wrapped as res.payload.user.role OR directly as res.payload.role
@@ -30,7 +31,7 @@ export default function LoginPage() {
         }
       }
     });
-  };;
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
@@ -63,6 +64,17 @@ export default function LoginPage() {
               required 
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
             />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-600 mb-1">Security Role</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              <option value="student">Student</option>
+              <option value="admin">Administrator</option>
+            </select>
           </div>
           <button 
             type="submit" 

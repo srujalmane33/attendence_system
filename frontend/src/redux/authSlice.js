@@ -50,8 +50,9 @@ const getSafeStorageItem = (key) => {
 const authSlice = createSlice({
   name: 'auth',
   initialState: { 
-    user: getSafeStorageItem('user'), 
-    token: localStorage.getItem('token') || null, 
+    // user: getSafeStorageItem('user'), 
+    // token: localStorage.getItem('token') || null, 
+    token:null,
     loading: false, 
     error: null 
   },
@@ -59,8 +60,9 @@ const authSlice = createSlice({
     logout: (state) => {
       state.user = null;
       state.token = null;
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      state.loading = false;
+      // localStorage.removeItem('token');
+      // localStorage.removeItem('user');
     },
     clearError: (state) => {
       state.error = null;
