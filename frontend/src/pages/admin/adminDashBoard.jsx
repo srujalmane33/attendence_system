@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import axios from 'axios';
 import NavBar from '../../component/navBar';
 import AdminSideBar from '../../component/adminSideBar';
+import { API_URL } from '../../config';
 
 // Optimized Student Card View Component via Memoization
 const StudentCard = memo(({ student, formatTime, getInitials }) => {
@@ -156,7 +157,7 @@ export default function AdminDashBoard() {
       setLoading(true);
       setError(null);
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+      const BASE_URL = API_URL;
 
       try {
         let logsRes;

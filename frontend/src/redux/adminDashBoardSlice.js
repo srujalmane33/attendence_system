@@ -1,11 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { API_URL } from '../config';
 
 export const fetchLiveStats = createAsyncThunk('adminDashboard/fetchStats', async (_, { getState, rejectWithValue }) => {
   try {
     const { auth } = getState();
     const config = { headers: { Authorization: `Bearer ${auth.token}` } };
-    const response = await axios.get('http://localhost:3000/api/admin/stats', config);
+    const response = await axios.get(`${API_URL}/admin/stats`, config);
     return response.data; // Expected: { presentToday: 12, absentToday: 3, totalUsers: 15 }
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to fetch dashboard metrics');

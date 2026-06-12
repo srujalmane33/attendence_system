@@ -1,10 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { API_URL } from '../config';
 
 // Thunk to handle backend registration
 export const registerUser = createAsyncThunk('auth/register', async (userData, { dispatch, rejectWithValue }) => {
   try {
-    const response = await axios.post('http://localhost:3000/api/auth/register', userData);
+    const response = await axios.post(`${API_URL}/auth/register`, userData);
     
     // Scenario A: If backend returns a token directly upon successful registration
     if (response.data?.token) {
@@ -27,7 +28,7 @@ export const registerUser = createAsyncThunk('auth/register', async (userData, {
 // Thunk to handle backend login
 export const loginUser = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
   try {
-    const response = await axios.post('http://localhost:3000/api/auth/login', credentials);
+    const response = await axios.post(`${API_URL}/auth/login`, credentials);
     return response.data; // Expected: { token: '...', user: { name: '...', role: '...' } }
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Login failed');

@@ -1,11 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { API_URL } from '../config';
 
 export const fetchAllUsers = createAsyncThunk('users/fetchAll', async (_, { getState, rejectWithValue }) => {
   try {
     const { auth } = getState();
     const config = { headers: { Authorization: `Bearer ${auth.token}` } };
-    const response = await axios.get('http://localhost:3000/api/admin/users', config);
+    const response = await axios.get(`${API_URL}/admin/users`, config);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to fetch employee roster');

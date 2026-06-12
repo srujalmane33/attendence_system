@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { API_URL } from '../config';
 
 // =========================================================================
 // THUNK 1: PUNCH ENTRY ATTENDANCE
@@ -8,7 +9,7 @@ export const markAttendance = createAsyncThunk('attendance/mark', async (data, {
   try {
     const { auth } = getState();
     const config = { headers: { Authorization: `Bearer ${auth.token}` } };
-    const response = await axios.post('http://localhost:3000/api/attendance/entry', data, config);
+    const response = await axios.post(`${API_URL}/attendance/entry`, data, config);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to submit entry');
@@ -22,7 +23,7 @@ export const logExitTime = createAsyncThunk('attendance/exit', async (_, { getSt
   try {
     const { auth } = getState();
     const config = { headers: { Authorization: `Bearer ${auth.token}` } };
-    const response = await axios.put('http://localhost:3000/api/attendance/exit', {}, config);
+    const response = await axios.put(`${API_URL}/attendance/exit`, {}, config);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to submit exit time');
@@ -36,7 +37,7 @@ export const getAttendanceLogs = createAsyncThunk('attendance/getLogs', async (_
   try {
     const { auth } = getState();
     const config = { headers: { Authorization: `Bearer ${auth.token}` } };
-    const response = await axios.get('http://localhost:3000/api/attendance/my-logs', config);
+    const response = await axios.get(`${API_URL}/attendance/my-logs`, config);
     return response.data; 
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to fetch attendance logs');
