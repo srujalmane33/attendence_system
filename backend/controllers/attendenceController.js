@@ -1,15 +1,16 @@
 import prisma from '../config/db.js';
+import cloudinary from '../config/cloudinary.js'; // Import your Cloudinary config
 
 // @desc    Mark student entry time (State A)
 // @route   POST /api/attendance/entry
 // @access  Private (Student)
 export const markEntry = async (req, res) => {
   try {
+    const { image } = req.body; // Expecting base64 image string from the camera component
     const now = new Date();
-    const today = now.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    const today = now.toISOString().split('T')[0];
 
     // 1. Programmatic single-punch verification guard
-    // Check if this student already has ANY attendance log recorded for today
     const existingRecord = await prisma.attendance.findFirst({
       where: {
         date: today,
@@ -25,12 +26,21 @@ export const markEntry = async (req, res) => {
       });
     }
 
+    // Upload entry snap to Cloudinary if provided
+    let entryPhotoUrl = null;
+    if (image) {
+      const uploadRes = await cloudinary.uploader.upload(image, {
+        folder: 'student_entries',
+      });
+      entryPhotoUrl = uploadRes.secure_url;
+    }
+
     // 2. Create entry log utilizing the authenticated student details from Prisma
-    // This will trigger MongoDB's native compound unique index ("student.id" + "date") if hit concurrently
     const newEntry = await prisma.attendance.create({
       data: {
         date: today,
-        entryTime: now, // Captures high-precision, live clock timestamps
+        entryTime: now,
+        entryPhotoUrl, // Stores Cloudinary URL
         status: 'In-Classroom',
         student: {
           id: req.user.id,
@@ -44,9 +54,6 @@ export const markEntry = async (req, res) => {
   } catch (error) {
     console.error("MARK ENTRY ERROR:", error);
 
-    // 💡 THE PRISMA + MONGODB UNIQUE INDEX INTERCEPTOR:
-    // - P2002: Prisma's native unique constraint violation code
-    // - 11000: MongoDB's raw duplicate key collection index code
     const isDuplicate = 
       error.code === 'P2002' || 
       error.message?.includes('P2002') ||
@@ -68,6 +75,7 @@ export const markEntry = async (req, res) => {
 // @access  Private (Student)
 export const markExit = async (req, res) => {
   try {
+    const { image } = req.body; // Expecting base64 image string from the camera component
     const today = new Date().toISOString().split('T')[0];
 
     // Locate today's active classroom record for the logged-in student
@@ -87,11 +95,21 @@ export const markExit = async (req, res) => {
       });
     }
 
+    // Upload exit snap to Cloudinary if provided
+    let exitPhotoUrl = null;
+    if (image) {
+      const uploadRes = await cloudinary.uploader.upload(image, {
+        folder: 'student_exits',
+      });
+      exitPhotoUrl = uploadRes.secure_url;
+    }
+
     // Update fields using the specific document's unique ID to close out the session
     const updatedRecord = await prisma.attendance.update({
       where: { id: attendanceRecord.id },
       data: {
         exitTime: new Date(),
+        exitPhotoUrl, // Stores Cloudinary URL
         status: 'Left'
       }
     });
@@ -110,7 +128,6 @@ export const markExit = async (req, res) => {
 // @access  Private (Student)
 export const getMyAttendanceLogs = async (req, res) => {
   try {
-    // Query database using Prisma's structural filtering matching the active user ID
     const userLogs = await prisma.attendance.findMany({
       where: {
         student: {
@@ -123,7 +140,6 @@ export const getMyAttendanceLogs = async (req, res) => {
       ]
     });
 
-    // Send the array back to our Redux store frontend
     res.status(200).json(userLogs);
   } catch (error) {
     res.status(500).json({ 
@@ -138,7 +154,6 @@ export const getMyAttendanceLogs = async (req, res) => {
 // @access  Private (Admin Only)
 export const getAllAttendance = async (req, res) => {
   try {
-    // Fetch all logs from the database, sorted newest first by date and entryTime
     const logs = await prisma.attendance.findMany({
       orderBy: [
         { date: 'desc' },

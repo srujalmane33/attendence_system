@@ -20,12 +20,14 @@ model User {
 }
 
 model Attendance {
-  id        String          @id @default(auto()) @map("_id") @db.ObjectId
-  student   EmbeddedStudent
-  date      String          // Stored as "YYYY-MM-DD"
-  entryTime DateTime        @default(now())
-  exitTime  DateTime?       // Nullable until exit is clicked
-  status    String          @default("In-Classroom") // "In-Classroom" or "Left"
+  id            String          @id @default(auto()) @map("_id") @db.ObjectId
+  student       EmbeddedStudent
+  date          String          // Stored as "YYYY-MM-DD"
+  entryTime     DateTime        @default(now())
+  entryPhotoUrl String?         // <-- [NEW] Stores Cloudinary URL of the entry snapshot
+  exitTime      DateTime?       // Nullable until exit is clicked
+  exitPhotoUrl  String?         // <-- [NEW] Stores Cloudinary URL of the exit snapshot
+  status        String          @default("In-Classroom") // "In-Classroom" or "Left"
 
   @@map("attendances") // Maps Prisma directly to your old Mongoose 'attendances' collection
 }

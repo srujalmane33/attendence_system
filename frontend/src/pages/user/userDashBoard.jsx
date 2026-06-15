@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { markAttendance, logExitTime, getAttendanceLogs, clearAttendanceError } from '../../redux/attendenceSlice';
 import NavBar from '../../component/navBar';
 import UserSideBar from '../../component/userSideBar';
+import CameraCapture from '../../component/CameraComponent'; // Imported your new webcam component
 
 export default function UserDashboard() {
   const dispatch = useDispatch();
+  const webcamRef = useRef(null); // Reference to track webcam frames
   
   const { logs, loading, error } = useSelector((state) => state.attendance || { logs: [], loading: false, error: null });
 
@@ -49,17 +51,40 @@ export default function UserDashboard() {
   const handleClockIn = async () => {
     if (loading) return;
     setSuccessMessage('');
-    const result = await dispatch(markAttendance({ timestamp: new Date().toISOString() }));
+
+    // Capture entry snapshot from webcam stream
+    const imageSrc = webcamRef.current ? webcamRef.current.getScreenshot() : null;
+    if (!imageSrc) {
+      alert("⚠️ Camera initialization failed! Please enable webcam permissions to mark entry.");
+      return;
+    }
+
+    // Pass the base64 encoded image frame straight down to your existing slice/async thunk
+    const result = await dispatch(markAttendance({ 
+      timestamp: new Date().toISOString(),
+      image: imageSrc 
+    }));
+
     if (markAttendance.fulfilled.match(result)) {
       setSuccessMessage('🎉 Classroom Entry logged successfully! Enjoy your lecture.');
     }
   };
 
-  // Trigger Exit Check-Out (NEW)
+  // Trigger Exit Check-Out
   const handleClockExit = async () => {
     if (loading) return;
     setSuccessMessage('');
-    const result = await dispatch(logExitTime());
+
+    // Capture exit snapshot from webcam stream
+    const imageSrc = webcamRef.current ? webcamRef.current.getScreenshot() : null;
+    if (!imageSrc) {
+      alert("⚠️ Camera initialization failed! Please enable webcam permissions to mark exit.");
+      return;
+    }
+
+    // Pass the base64 encoded image frame straight down into your logExitTime thunk
+    const result = await dispatch(logExitTime({ image: imageSrc }));
+    
     if (logExitTime.fulfilled.match(result)) {
       setSuccessMessage('🚶 Exit logged successfully! Have a great day.');
     }
@@ -107,6 +132,13 @@ export default function UserDashboard() {
                 </div>
               )}
             </div>
+
+            {/* Live Camera Capture Frame (Visible only when action can be taken) */}
+            {(todayState === 'NOT_CHECKED_IN' || todayState === 'CHECKED_IN') && (
+              <div className="mb-6 max-w-xs mx-auto lg:mx-0">
+                <CameraCapture webcamRef={webcamRef} />
+              </div>
+            )}
 
             {/* Interactive Punch States */}
             <div className="mt-4">

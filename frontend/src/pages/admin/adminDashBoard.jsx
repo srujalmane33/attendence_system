@@ -285,7 +285,7 @@ export default function AdminDashBoard() {
       <NavBar />
       <AdminSideBar />
 
-      <main className="pl-72 pt-24 pr-8 pb-12 max-w-7xl mx-auto">
+      <main className="px-4 md:pl-72 pt-24 pb-24 md:pb-12 pr-4 md:pr-8 max-w-7xl mx-auto">
         
         {/* Header Block with Date Selection */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">

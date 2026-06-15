@@ -17,13 +17,13 @@ export const markAttendance = createAsyncThunk('attendance/mark', async (data, {
 });
 
 // =========================================================================
-// THUNK 2: PUNCH EXIT ATTENDANCE (NEW)
+// THUNK 2: PUNCH EXIT ATTENDANCE (UPDATED TO ACCEPT BASE64 IMAGE)
 // =========================================================================
-export const logExitTime = createAsyncThunk('attendance/exit', async (_, { getState, rejectWithValue }) => {
+export const logExitTime = createAsyncThunk('attendance/exit', async (data, { getState, rejectWithValue }) => {
   try {
     const { auth } = getState();
     const config = { headers: { Authorization: `Bearer ${auth.token}` } };
-    const response = await axios.put(`${API_URL}/attendance/exit`, {}, config);
+    const response = await axios.put(`${API_URL}/attendance/exit`, data, config);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to submit exit time');
@@ -31,7 +31,7 @@ export const logExitTime = createAsyncThunk('attendance/exit', async (_, { getSt
 });
 
 // =========================================================================
-// THUNK 3: FETCH PERSISTENT HISTORICAL LOGS
+// THUNK 3: FETCH PERSISTENT HISTORICAL LOGS (STUDENT)
 // =========================================================================
 export const getAttendanceLogs = createAsyncThunk('attendance/getLogs', async (_, { getState, rejectWithValue }) => {
   try {
@@ -41,6 +41,20 @@ export const getAttendanceLogs = createAsyncThunk('attendance/getLogs', async (_
     return response.data; 
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to fetch attendance logs');
+  }
+});
+
+// =========================================================================
+// THUNK 4: FETCH ALL STUDENT LOGS (ADMIN MASTER VIEW)
+// =========================================================================
+export const getAllAttendance = createAsyncThunk('attendance/getAll', async (_, { getState, rejectWithValue }) => {
+  try {
+    const { auth } = getState();
+    const config = { headers: { Authorization: `Bearer ${auth.token}` } };
+    const response = await axios.get(`${API_URL}/attendance/admin/all`, config);
+    return response.data; 
+  } catch (error) {
+    return rejectWithValue(error.response?.data?.message || 'Failed to fetch admin logs');
   }
 });
 
@@ -65,7 +79,6 @@ const attendanceSlice = createSlice({
       })
       .addCase(markAttendance.fulfilled, (state, action) => { 
         state.loading = false;
-        // The backend returns { message, data } - we append the updated/new object
         const newLog = action.payload.data || action.payload;
         state.logs = [newLog, ...state.logs]; 
       })
@@ -82,7 +95,6 @@ const attendanceSlice = createSlice({
       .addCase(logExitTime.fulfilled, (state, action) => {
         state.loading = false;
         const updatedLog = action.payload.data || action.payload;
-        // Locate today's log item in memory and replace it with the new updated exit record
         state.logs = state.logs.map(log => 
           log.id === updatedLog.id || log._id === updatedLog._id ? updatedLog : log
         );
@@ -92,7 +104,7 @@ const attendanceSlice = createSlice({
         state.error = action.payload;
       })
 
-      // RETRIEVAL REDUCERS
+      // RETRIEVAL REDUCERS (STUDENT PERSONAL HISTORY)
       .addCase(getAttendanceLogs.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -104,6 +116,22 @@ const attendanceSlice = createSlice({
           : action.payload?.logs || action.payload?.data || [];
       })
       .addCase(getAttendanceLogs.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // ADMIN MASTER RETRIEVAL REDUCERS
+      .addCase(getAllAttendance.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getAllAttendance.fulfilled, (state, action) => {
+        state.loading = false;
+        state.logs = Array.isArray(action.payload) 
+          ? action.payload 
+          : action.payload?.logs || action.payload?.data || [];
+      })
+      .addCase(getAllAttendance.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
